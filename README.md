@@ -88,6 +88,53 @@
 
 **共同铁律**：改动↔文档对照表里「改 X 必须同步 Y + 写 changelog」不是建议，而是核心不变量——文档契约的价值就在于「绕过不了」。
 
+## 更新流程（从 GitHub 同步回本地技能目录）
+
+本仓库是技能本体。你改完 GitHub 上的内容后，需要把它同步回**本地技能目录**才能生效。三种同步方式，按你的情况选：
+
+### 方式 A：一次性 clone + 手动复制（最简单，适合偶尔更新）
+
+```bash
+# 1. 拉到任意临时目录
+git clone https://github.com/yibai933/project-doc-contract.git /tmp/pdc
+
+# 2. 覆盖到本地技能目录
+#    WorkBuddy 用户：
+rm -rf ~/.workbuddy/skills/project-doc-contract
+cp -R /tmp/pdc ~/.workbuddy/skills/project-doc-contract
+#    其他 agent / 框架：复制到对应技能目录，例如
+#    cp -R /tmp/pdc <你的-agent-技能目录>/project-doc-contract
+
+# 3. 版本号对齐（关键）
+#    本地技能目录里的 SKILL.md frontmatter `version` 必须与本次 Release 标签一致：
+#    version: 1.1.1  ↔  git tag v1.1.1
+```
+
+> 注意：方式 A 是整目录覆盖，`~/.workbuddy/skills/project-doc-contract` 里你自己加的本地修改会被清掉。若你在该目录做过定制，先 `diff` 再手动 merge。
+
+### 方式 B：git pull 增量更新（你已在本地留了仓库）
+
+如果你之前已经把仓库 clone 到了某个固定目录（如 `~/Documents/project-doc-contract`），以后只增量拉取：
+
+```bash
+cd ~/Documents/project-doc-contract
+git pull origin main
+# 再按方式 A 第 2 步把更新复制进技能目录
+```
+
+### 方式 C：submodule / subtree（适合把技能作为子项目嵌进你的主仓库）
+
+- **submodule**：`git submodule add https://github.com/yibai933/project-doc-contract.git <主仓库>/skills/project-doc-contract`，更新时 `git submodule update --remote`。
+- **subtree**：`git subtree add --prefix skills/project-doc-contract https://github.com/yibai933/project-doc-contract main --squash`，更新时 `git subtree pull --prefix ... main --squash`。
+
+> subtree / submodule 同步的是仓库本身，要让 agent 真正用上，技能目录仍需指向这个子目录（或软链过去）。
+
+### 版本号约定
+
+- 每次发布新版本：先 `git commit` + `git push`，再打 `git tag vX.Y.Z`，标签与 `SKILL.md` frontmatter 的 `version` 字段必须一致。
+- 改了发布边界 / 沟通产物结构这类**会影响他人项目**的内容，务必升级次版本号（如 1.1.0 → 1.1.1）并写进 `changelog/`。
+- 本地技能目录的 `version` 若落后于标签，说明没同步到位，按上面方式 A/B 重同步即可。
+
 ## 文件导航
 
 - `SKILL.md` — 技能主文件（工作流 + 发布边界原则）
